@@ -1,0 +1,49 @@
+{
+    "location": {
+        "lat": 52.23515900000000300451574730686843395233154296875,
+        "lng": 21.039677000000001072521627065725624561309814453125
+    },
+    "contact": {
+        "phone": "+48 123 456 789",
+        "email": "kontakt@example.com",
+        "address": "ul. Przyk\u0142adowa 10, 00-001 Warszawa",
+        "note": "W dni \u015bwi\u0105teczne nieczynne"
+    },
+    "hours": {
+        "monday": {
+            "open": "08:00",
+            "close": "16:00",
+            "closed": false
+        },
+        "tuesday": {
+            "open": "09:00",
+            "close": "17:00",
+            "closed": false
+        },
+        "wednesday": {
+            "closed": false,
+            "open": "21:20",
+            "close": "12:15"
+        },
+        "thursday": {
+            "closed": true,
+            "open": "",
+            "close": ""
+        },
+        "friday": {
+            "closed": true,
+            "open": "",
+            "close": ""
+        },
+        "saturday": {
+            "closed": true,
+            "open": "",
+            "close": ""
+        },
+        "sunday": {
+            "closed": false,
+            "open": "10:00",
+            "close": "11:00"
+        }
+    }
+}
