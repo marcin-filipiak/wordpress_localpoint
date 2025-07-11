@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="localpoint.jpg" alt="LocalPoint logo" width="300"/>
+</p>
+
 # LocalPoint
 
 **LocalPoint** is a simple WordPress plugin for managing and displaying your location, contact info, and opening hours via a user-friendly admin settings page with map interaction.
