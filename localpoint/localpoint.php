@@ -3,7 +3,7 @@
  * Plugin Name:       LocalPoint
  * Plugin URI:        https://github.com/marcin-filipiak/wordpress_localpoint
  * Description:       Display your business location, opening hours and contact info using OpenStreetMap.
- * Version:           1.0
+ * Version:           2.1
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Marcin Filipiak
@@ -13,14 +13,9 @@
  * Domain Path:       /languages
  */
 
-if (!defined('ABSPATH')) exit;
-
-// Load translations
-add_action('plugins_loaded', function() {
-    load_plugin_textdomain('localpoint', false, dirname(plugin_basename(__FILE__)) . '/languages/');
-});
-
-define('LOCALPOINT_JSON_FILE', plugin_dir_path(__FILE__) . 'data/config.json');
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 // Enqueue assets
 add_action('wp_enqueue_scripts', 'localpoint_enqueue_assets');
@@ -29,32 +24,24 @@ function localpoint_enqueue_assets() {
     wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], null, true);
 
     wp_enqueue_style('localpoint-style', plugin_dir_url(__FILE__) . 'assets/style.css');
-    // wp_enqueue_script('localpoint-map', plugin_dir_url(__FILE__) . 'assets/map.js', ['leaflet'], null, true);
 
-    if (file_exists(LOCALPOINT_JSON_FILE)) {
-        $data = file_get_contents(LOCALPOINT_JSON_FILE);
-        $json_data = json_decode($data, true);
-        if ($json_data !== null) {
-            wp_localize_script('localpoint-map', 'localpointData', $json_data);
-        }
+    $json_data = get_option('localpoint_data', []);
+    if (!empty($json_data)) {
+        wp_localize_script('localpoint-map', 'localpointData', $json_data);
     }
 }
 
+// Shortcode
 add_shortcode('localpoint', 'localpoint_shortcode');
 function localpoint_shortcode() {
     ob_start();
 
-    $json_file = plugin_dir_path(__FILE__) . 'data/config.json';
-    $data = [];
-    if (file_exists($json_file)) {
-        $content = file_get_contents($json_file);
-        $data = json_decode($content, true);
-    }
+    $data = get_option('localpoint_data', []);
 
     $lat = $data['location']['lat'] ?? 0;
     $lng = $data['location']['lng'] ?? 0;
-    
-        $weekdays = [
+
+    $weekdays = [
         'monday'    => __('Monday', 'localpoint'),
         'tuesday'   => __('Tuesday', 'localpoint'),
         'wednesday' => __('Wednesday', 'localpoint'),
@@ -63,7 +50,6 @@ function localpoint_shortcode() {
         'saturday'  => __('Saturday', 'localpoint'),
         'sunday'    => __('Sunday', 'localpoint'),
     ];
-
     ?>
 
     <div id="localpoint-map"></div>
@@ -97,11 +83,11 @@ function localpoint_shortcode() {
                 <?php if (!empty($data['hours']) && is_array($data['hours'])): ?>
                     <?php foreach ($data['hours'] as $day => $hours): ?>
                         <tr>
-                            <td><?php echo isset($weekdays[strtolower($day)]) ? $weekdays[strtolower($day)] : ucfirst(esc_html($day)); ?></td>
+                            <td><?php echo isset($weekdays[strtolower($day)]) ? esc_html($weekdays[strtolower($day)]) : ucfirst(esc_html($day)); ?></td>
                             <td>
                                 <?php
                                 if (!empty($hours['closed']) && $hours['closed'] === true) {
-                                    echo __('Closed', 'localpoint');
+                                    echo esc_html__('Closed', 'localpoint');
                                 } else {
                                     echo esc_html($hours['open'] ?? '') . ' - ' . esc_html($hours['close'] ?? '');
                                 }
@@ -135,5 +121,6 @@ function localpoint_admin_menu() {
     );
 }
 
+// Admin interface logic
 require_once plugin_dir_path(__FILE__) . 'admin-page.php';
 

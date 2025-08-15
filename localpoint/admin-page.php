@@ -1,10 +1,6 @@
 <?php
 
-define('LOCALPOINT_JSON_FILE', __DIR__ . '/data/config.json');
-
 function localpoint_settings_page() {
-    $json_path = LOCALPOINT_JSON_FILE;
-
     $default_data = [
         'location' => [
             'lat' => 52.2297,
@@ -27,11 +23,10 @@ function localpoint_settings_page() {
         ],
     ];
 
-    if (!file_exists($json_path)) {
-        file_put_contents($json_path, json_encode($default_data, JSON_PRETTY_PRINT));
+    $data = get_option('localpoint_data', []);
+    if (empty($data)) {
+        $data = $default_data;
     }
-
-    $data = json_decode(file_get_contents($json_path), true);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('localpoint_save_settings')) {
         $data['location']['lat'] = floatval($_POST['lat']);
@@ -54,14 +49,20 @@ function localpoint_settings_page() {
             }
         }
 
-        file_put_contents($json_path, json_encode($data, JSON_PRETTY_PRINT));
+        update_option('localpoint_data', $data);
         echo '<div class="updated"><p>' . esc_html__('Settings saved.', 'localpoint') . '</p></div>';
     }
 
-    // Klucze i nazwy dni do tłumaczenia
     $days_keys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    $days_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
+    $days_translations = [
+        'monday'    => __('Monday', 'localpoint'),
+        'tuesday'   => __('Tuesday', 'localpoint'),
+        'wednesday' => __('Wednesday', 'localpoint'),
+        'thursday'  => __('Thursday', 'localpoint'),
+        'friday'    => __('Friday', 'localpoint'),
+        'saturday'  => __('Saturday', 'localpoint'),
+        'sunday'    => __('Sunday', 'localpoint'),
+    ];
     ?>
     <div class="wrap">
         <h1><?php echo esc_html__('LocalPoint Settings', 'localpoint'); ?></h1>
@@ -82,12 +83,12 @@ function localpoint_settings_page() {
 
             <h2><?php echo esc_html__('Opening hours', 'localpoint'); ?></h2>
             <table class="form-table">
-                <?php foreach ($days_keys as $index => $day_key):
-                    $day_name = $days_names[$index];
+                <?php foreach ($days_keys as $day_key):
+                    $day_name = $days_translations[$day_key];
                     $hours = $data['hours'][$day_key];
                 ?>
                     <tr>
-                        <th><?php echo esc_html__($day_name, 'localpoint'); ?></th>
+                        <th><?php echo esc_html($day_name); ?></th>
                         <td>
                             <label><?php echo esc_html__('Open:', 'localpoint'); ?> <input type="time" name="hours[<?php echo esc_attr($day_key); ?>][open]" value="<?php echo esc_attr($hours['open']); ?>" <?php if (!empty($hours['closed'])) echo 'disabled'; ?>></label>
                             <label><?php echo esc_html__('Close:', 'localpoint'); ?> <input type="time" name="hours[<?php echo esc_attr($day_key); ?>][close]" value="<?php echo esc_attr($hours['close']); ?>" <?php if (!empty($hours['closed'])) echo 'disabled'; ?>></label>
@@ -118,7 +119,7 @@ function localpoint_settings_page() {
 
         var marker = L.marker([lat, lng], {draggable: true}).addTo(map);
 
-        marker.on('dragend', function (e) {
+        marker.on('dragend', function () {
             var position = marker.getLatLng();
             document.querySelector('input[name="lat"]').value = position.lat.toFixed(6);
             document.querySelector('input[name="lng"]').value = position.lng.toFixed(6);

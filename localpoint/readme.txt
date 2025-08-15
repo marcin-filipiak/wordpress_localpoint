@@ -4,7 +4,7 @@ Tags: map, business location, opening hours, contact info, OpenStreetMap
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0
+Stable tag: 2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,7 +30,7 @@ Features include:
 
     Activate the plugin through the "Plugins" menu in WordPress.
 
-    Add your business data (location, hours, contact) in the data/config.json file.
+    Add your business data (location, hours, contact) in the admin panel.
 
     Use the shortcode [localpoint] on any post or page to display the map and info.
 
@@ -38,12 +38,6 @@ Features include:
 
 = Can I translate the day names and labels? =
 Yes, the plugin supports translations. You can provide your own translations via .po files in the /languages folder.
-
-= How do I change the location shown on the map? =
-Edit the latitude and longitude values in the data/config.json file.
-
-= Can I customize the opening hours format? =
-Currently, the plugin reads hours from the JSON file and displays them in a table. You can edit the JSON file structure but should keep keys consistent.
 
 
 == Changelog ==
@@ -56,10 +50,9 @@ Currently, the plugin reads hours from the JSON file and displays them in a tabl
 
     Supports translation and localization.
 
-== Upgrade Notice ==
+= 2.0 =
 
-= 1.0 =
-First public version of LocalPoint plugin.
+    Data storage in database.
 
 == License ==
 

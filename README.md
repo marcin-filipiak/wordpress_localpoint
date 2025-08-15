@@ -11,7 +11,7 @@
 * Interactive map with draggable marker to set location coordinates
 * Save and display phone, email, address, and a note
 * Manage detailed opening hours with per-day open/close times or closed status
-* Settings stored in a JSON file inside the plugin folder
+* Settings stored in a database
 * Lightweight and minimal dependencies (uses Leaflet for map display)
 * Clean, intuitive admin interface for easy customization
 
@@ -26,7 +26,7 @@
 * Adjust the marker on the map to update your latitude and longitude.
 * Enter your contact information and notes.
 * Set your weekly opening hours with easy checkboxes for closed days.
-* Save changes to update the settings stored in a JSON file.
+* Save changes to update the settings stored in a database.
 
 ## Requirements
 
