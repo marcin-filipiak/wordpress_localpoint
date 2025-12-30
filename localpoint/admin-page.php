@@ -7,17 +7,32 @@ define('LOCALPOINT_OPTION', 'localpoint_data');
 
 add_action('admin_enqueue_scripts', 'localpoint_admin_assets');
 function localpoint_admin_assets($hook) {
-    // Sprawdzenie, czy jesteśmy na stronie naszego pluginu
     if ($hook !== 'toplevel_page_localpoint-settings') {
         return;
     }
 
-    // Leaflet lokalnie z folderu assets
-    wp_enqueue_style('leaflet-admin', plugin_dir_url(__FILE__) . 'assets/css/leaflet.css');
-    wp_enqueue_script('leaflet-admin', plugin_dir_url(__FILE__) . 'assets/js/leaflet.js', [], null, true);
+    wp_enqueue_style(
+        'leaflet-admin',
+        plugin_dir_url(__FILE__) . 'assets/css/leaflet.css',
+        [],
+        LOCALPOINT_VERSION
+    );
 
-    // Nasz JS do mapy w panelu
-    wp_enqueue_script('localpoint-admin-map', plugin_dir_url(__FILE__) . 'assets/js/admin-map.js', ['leaflet-admin'], null, true);
+    wp_enqueue_script(
+        'leaflet-admin',
+        plugin_dir_url(__FILE__) . 'assets/js/leaflet.js',
+        [],
+        LOCALPOINT_VERSION,
+        true
+    );
+
+    wp_enqueue_script(
+        'localpoint-admin-map',
+        plugin_dir_url(__FILE__) . 'assets/js/admin-map.js',
+        ['leaflet-admin'],
+        LOCALPOINT_VERSION,
+        true
+    );
 }
 
 function localpoint_settings_page() {
@@ -35,25 +50,37 @@ function localpoint_settings_page() {
         ],
     ]);
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('localpoint_save_settings')) {
-        $data['location']['lat'] = floatval($_POST['lat']);
-        $data['location']['lng'] = floatval($_POST['lng']);
-        $data['contact']['phone'] = sanitize_text_field($_POST['phone']);
-        $data['contact']['email'] = sanitize_email($_POST['email']);
-        $data['contact']['address'] = sanitize_text_field($_POST['address']);
-        $data['contact']['note'] = sanitize_text_field($_POST['note']);
 
-        foreach ($data['hours'] as $day => $hours) {
-            if (!empty($_POST['hours'][$day]['closed'])) {
-                $data['hours'][$day]['closed'] = true;
-                $data['hours'][$day]['open'] = '';
-                $data['hours'][$day]['close'] = '';
+    if (
+        isset($_SERVER['REQUEST_METHOD']) &&
+        $_SERVER['REQUEST_METHOD'] === 'POST' &&
+        check_admin_referer('localpoint_save_settings') &&
+        current_user_can('manage_options')
+    ) {
+        $lat = isset($_POST['lat']) ? floatval(wp_unslash($_POST['lat'])) : 52.2297;
+        $lng = isset($_POST['lng']) ? floatval(wp_unslash($_POST['lng'])) : 21.0122;
+        $phone = isset($_POST['phone']) ? sanitize_text_field(wp_unslash($_POST['phone'])) : '';
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        $address = isset($_POST['address']) ? sanitize_text_field(wp_unslash($_POST['address'])) : '';
+        $note = isset($_POST['note']) ? sanitize_text_field(wp_unslash($_POST['note'])) : '';
+
+        $hours = [];
+        foreach ($data['hours'] as $day => $defaults) {
+            $closed = !empty($_POST['hours'][$day]['closed']);
+            if ($closed) {
+                $hours[$day] = ['open' => '', 'close' => '', 'closed' => true];
             } else {
-                $data['hours'][$day]['closed'] = false;
-                $data['hours'][$day]['open'] = sanitize_text_field($_POST['hours'][$day]['open'] ?? '');
-                $data['hours'][$day]['close'] = sanitize_text_field($_POST['hours'][$day]['close'] ?? '');
+                $open  = isset($_POST['hours'][$day]['open'])  ? sanitize_text_field(wp_unslash($_POST['hours'][$day]['open']))  : '';
+                $close = isset($_POST['hours'][$day]['close']) ? sanitize_text_field(wp_unslash($_POST['hours'][$day]['close'])) : '';
+                $hours[$day] = ['open' => $open, 'close' => $close, 'closed' => false];
             }
         }
+
+        $data = [
+            'location' => ['lat' => $lat, 'lng' => $lng],
+            'contact'  => ['phone' => $phone, 'email' => $email, 'address' => $address, 'note' => $note],
+            'hours'    => $hours,
+        ];
 
         update_option(LOCALPOINT_OPTION, $data);
         echo '<div class="updated"><p>' . esc_html__('Settings saved.', 'localpoint') . '</p></div>';
@@ -128,4 +155,3 @@ function localpoint_settings_page() {
     </div>
 <?php
 }
-

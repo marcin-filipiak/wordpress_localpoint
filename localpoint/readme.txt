@@ -2,7 +2,7 @@
 Contributors: marcinfilipiak
 Tags: map, business location, opening hours, contact info, OpenStreetMap
 Requires at least: 5.8
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
 Stable tag: 2.0
 License: GPLv2 or later

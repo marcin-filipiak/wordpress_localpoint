@@ -17,31 +17,68 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Enqueue assets
+define('LOCALPOINT_VERSION', '2.0');
+
+/*
+ * Enqueue assets (frontend)
+ */
 add_action('wp_enqueue_scripts', 'localpoint_enqueue_assets');
 function localpoint_enqueue_assets() {
-    // Zakładamy, że leaflet.css i leaflet.js są w folderze assets/js i assets/css
-    wp_enqueue_style('leaflet', plugin_dir_url(__FILE__) . 'assets/css/leaflet.css');
-    wp_enqueue_script('leaflet', plugin_dir_url(__FILE__) . 'assets/js/leaflet.js', [], null, true);
 
-    wp_enqueue_style('localpoint-style', plugin_dir_url(__FILE__) . 'assets/style.css');
+    if (!is_singular()) {
+        return;
+    }
 
-    wp_register_script('localpoint-map', plugin_dir_url(__FILE__) . 'assets/js/map.js', ['leaflet'], null, true);
+    global $post;
+    if (!$post || !has_shortcode($post->post_content, 'localpoint')) {
+        return;
+    }
 
-    $data = get_option('localpoint_data', []);
-    wp_localize_script('localpoint-map', 'localpointData', $data);
+    wp_enqueue_style(
+        'leaflet',
+        plugin_dir_url(__FILE__) . 'assets/css/leaflet.css',
+        [],
+        LOCALPOINT_VERSION
+    );
 
-    wp_enqueue_script('localpoint-map');
+    wp_enqueue_script(
+        'leaflet',
+        plugin_dir_url(__FILE__) . 'assets/js/leaflet.js',
+        [],
+        LOCALPOINT_VERSION,
+        true
+    );
+
+    wp_enqueue_style(
+        'localpoint-style',
+        plugin_dir_url(__FILE__) . 'assets/css/style.css',
+        [],
+        LOCALPOINT_VERSION
+    );
+
+    wp_enqueue_script(
+        'localpoint-map',
+        plugin_dir_url(__FILE__) . 'assets/js/map.js',
+        ['leaflet'],
+        LOCALPOINT_VERSION,
+        true
+    );
+
+    wp_localize_script(
+        'localpoint-map',
+        'localpointData',
+        get_option('localpoint_data', [])
+    );
 }
 
-// Shortcode
+/*
+ * Shortcode
+ */
 add_shortcode('localpoint', 'localpoint_shortcode');
 function localpoint_shortcode() {
     ob_start();
-    $data = get_option('localpoint_data', []);
 
-    $lat = isset($data['location']['lat']) ? floatval($data['location']['lat']) : 0;
-    $lng = isset($data['location']['lng']) ? floatval($data['location']['lng']) : 0;
+    $data = get_option('localpoint_data', []);
 
     $weekdays = [
         'monday'    => esc_html__('Monday', 'localpoint'),
@@ -62,6 +99,7 @@ function localpoint_shortcode() {
             <p><?php echo esc_html__('Phone:', 'localpoint') . ' ' . esc_html($data['contact']['phone'] ?? '-'); ?></p>
             <p><?php echo esc_html__('Email:', 'localpoint') . ' ' . esc_html($data['contact']['email'] ?? '-'); ?></p>
             <p><?php echo esc_html__('Address:', 'localpoint') . ' ' . esc_html($data['contact']['address'] ?? '-'); ?></p>
+
             <?php if (!empty($data['contact']['note'])): ?>
                 <p><em><?php echo esc_html($data['contact']['note']); ?></em></p>
             <?php endif; ?>
@@ -72,14 +110,14 @@ function localpoint_shortcode() {
                     <?php foreach ($data['hours'] as $day => $hours): ?>
                         <tr>
                             <td>
-                                <?php 
-                                $day_label = isset($weekdays[strtolower($day)]) ? $weekdays[strtolower($day)] : esc_html(ucfirst($day)); 
-                                echo esc_html($day_label); 
+                                <?php
+                                $key = strtolower($day);
+                                echo esc_html($weekdays[$key] ?? ucfirst($day));
                                 ?>
                             </td>
                             <td>
                                 <?php
-                                if (!empty($hours['closed']) && $hours['closed'] === true) {
+                                if (!empty($hours['closed'])) {
                                     echo esc_html__('Closed', 'localpoint');
                                 } else {
                                     echo esc_html($hours['open'] ?? '') . ' - ' . esc_html($hours['close'] ?? '');
@@ -89,7 +127,9 @@ function localpoint_shortcode() {
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="2"><?php echo esc_html__('No opening hours data', 'localpoint'); ?></td></tr>
+                    <tr>
+                        <td colspan="2"><?php echo esc_html__('No opening hours data', 'localpoint'); ?></td>
+                    </tr>
                 <?php endif; ?>
             </table>
         <?php else: ?>
@@ -97,25 +137,13 @@ function localpoint_shortcode() {
         <?php endif; ?>
     </div>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if (typeof L !== "undefined") {
-            var map = L.map('localpoint-map').setView([<?php echo esc_js($lat); ?>, <?php echo esc_js($lng); ?>], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-            L.marker([<?php echo esc_js($lat); ?>, <?php echo esc_js($lng); ?>]).addTo(map);
-        } else {
-            console.error('Leaflet.js is not loaded');
-        }
-    });
-    </script>
-
     <?php
     return ob_get_clean();
 }
 
-// Admin menu
+/*
+ * Admin menu
+ */
 add_action('admin_menu', 'localpoint_admin_menu');
 function localpoint_admin_menu() {
     add_menu_page(
@@ -128,6 +156,5 @@ function localpoint_admin_menu() {
     );
 }
 
-// Admin interface logic
 require_once plugin_dir_path(__FILE__) . 'admin-page.php';
 
